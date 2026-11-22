@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum FolderVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum FolderRole {
+  VIEWER
+  EDITOR
+}
+
+enum DocumentShareType {
+  USER
+  PUBLIC_LINK
+}
+
+enum DocumentPermission {
+  READ
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String?
+  email         String?  @unique
+  emailVerified DateTime?
+  image         String?
+  username      String   @unique
+  passwordHash String?
+  docCounter    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  accounts               Account[]
+  sessions               Session[]
+  folders                Folder[]         @relation("FolderOwner")
+  documents              Document[]       @relation("DocumentOwner")
+  folderMemberships      FolderMember[]
+  receivedDocumentShares DocumentShare[]  @relation("ShareRecipient")
+  createdDocumentShares  DocumentShare[]  @relation("ShareCreator")
+}
+
+model Folder {
+  id          String           @id @default(cuid())
+  ownerId     String
+  name        String
+  slug        String
+  visibility  FolderVisibility @default(PRIVATE)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  owner       User             @relation("FolderOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  documents   Document[]
+  members     FolderMember[]
+
+  @@unique([ownerId, slug])
+  @@index([ownerId, updatedAt])
+  @@index([visibility, updatedAt])
+}
+
+model FolderMember {
+  id        String     @id @default(cuid())
+  folderId  String
+  userId    String
+  role      FolderRole @default(VIEWER)
+  createdAt DateTime   @default(now())
+
+  folder    Folder     @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([folderId, userId])
+  @@index([userId, createdAt])
+}
+
+model Document {
+  id         String   @id @default(cuid())
+  ownerId    String
+  folderId   String?
+  sequence   Int
+  systemId   String   @unique
+  title      String
+  slug       String
+  markdown   String   @default("") @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  owner      User            @relation("DocumentOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  folder     Folder?         @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  shares     DocumentShare[]
+
+  @@unique([ownerId, sequence])
+  @@unique([ownerId, slug])
+  @@index([ownerId, updatedAt])
+  @@index([folderId, updatedAt])
+  @@index([ownerId, title])
+}
+
+model DocumentShare {
+  id                String             @id @default(cuid())
+  documentId        String
+  createdById       String
+  recipientUserId   String?
+  type              DocumentShareType
+  permission        DocumentPermission @default(READ)
+  tokenHash         String?            @unique
+  expiresAt         DateTime?
+  revokedAt         DateTime?
+  createdAt         DateTime           @default(now())
+
+  document          Document           @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdBy         User               @relation("ShareCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  recipient         User?              @relation("ShareRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, recipientUserId])
+  @@index([documentId, revokedAt])
+  @@index([recipientUserId, revokedAt])
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
