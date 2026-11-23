@@ -4,18 +4,21 @@ import { useEffect, useRef, useState, type ComponentType } from "react";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import type { Editor } from "@tiptap/core";
 import {
-  Bold, Bookmark, Braces, ChevronDown, ChevronUp, Code, Hash, Heading1, Heading2,
-  Heading3, Highlighter, Image as ImageIcon, Italic, Link2, List, ListChecks,
-  ListOrdered, ListTree, Minus, Quote, Redo2, Smile, Strikethrough, Subscript,
-  Superscript, Table2, Undo2,
+  Bold, ChevronDown, ChevronUp, Code2, Heading1, Heading2, Heading3,
+  Highlighter, Image as ImageIcon, Italic, Link2, List, ListChecks, ListOrdered,
+  Minus, Quote, Redo2, Smile, Strikethrough, Subscript, Superscript, Table2,
+  Undo2, Bookmark, ListTree, Hash, History, Pilcrow,
 } from "lucide-react";
 import { containsRawHtml, renderMarkdown } from "@/lib/markdown";
 import { editorExtensions } from "@/lib/editor/extensions";
 
 type Tool = {
-  icon: ComponentType<{ size?: number }>;
+  icon?: ComponentType<{ size?: number }>;
+  glyph?: string;
   label: string;
   active?: boolean;
+  featured?: boolean;
+  disabled?: boolean;
   run: () => void;
 };
 
@@ -166,67 +169,81 @@ export function EditorToolbar({ editor, disabled, expanded, onToggleExpanded }: 
       ] }],
     }).run();
   };
+  const clearFormatting = (): void => {
+    editor.chain().focus().unsetAllMarks().setParagraph().run();
+  };
 
   const primary: Tool[] = [
-    { icon: Heading1, label: "Heading 1", active: active.h1, run: () => editor.chain().focus().toggleHeading({ level: 1 }).run() },
-    { icon: Heading2, label: "Heading 2", active: active.h2, run: () => editor.chain().focus().toggleHeading({ level: 2 }).run() },
-    { icon: Heading3, label: "Heading 3", active: active.h3, run: () => editor.chain().focus().toggleHeading({ level: 3 }).run() },
-    { icon: Bold, label: "Bold", active: active.bold, run: () => editor.chain().focus().toggleBold().run() },
-    { icon: Italic, label: "Italic", active: active.italic, run: () => editor.chain().focus().toggleItalic().run() },
+    { glyph: "H1", label: "Heading 1", active: active.h1, run: () => editor.chain().focus().toggleHeading({ level: 1 }).run() },
+    { glyph: "H2", label: "Heading 2", active: active.h2, run: () => editor.chain().focus().toggleHeading({ level: 2 }).run() },
+    { glyph: "H3", label: "Heading 3", active: active.h3, run: () => editor.chain().focus().toggleHeading({ level: 3 }).run() },
+    { glyph: "B", label: "Bold", active: active.bold, run: () => editor.chain().focus().toggleBold().run() },
+    { glyph: "I", label: "Italic", active: active.italic, run: () => editor.chain().focus().toggleItalic().run() },
     { icon: List, label: "Bullet list", active: active.bullet, run: () => editor.chain().focus().toggleBulletList().run() },
-    { icon: ListOrdered, label: "Numbered list", active: active.ordered, run: () => editor.chain().focus().toggleOrderedList().run() },
     { icon: Link2, label: "Link", active: active.link, run: link },
     { icon: ImageIcon, label: "Image", run: image },
-    { icon: Table2, label: "Table", active: active.table, run: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
-    { icon: Quote, label: "Quote", active: active.quote, run: () => editor.chain().focus().toggleBlockquote().run() },
+    { icon: Quote, label: "Blockquote", active: active.quote, featured: true, run: () => editor.chain().focus().toggleBlockquote().run() },
   ];
 
   const secondary: Tool[] = [
-    { icon: Undo2, label: "Undo", active: false, run: () => editor.chain().focus().undo().run() },
-    { icon: Redo2, label: "Redo", active: false, run: () => editor.chain().focus().redo().run() },
-    { icon: Strikethrough, label: "Strikethrough", active: active.strike, run: () => editor.chain().focus().toggleStrike().run() },
-    { icon: Highlighter, label: "Highlight", active: active.highlight, run: () => editor.chain().focus().toggleHighlight().run() },
-    { icon: Subscript, label: "Subscript", active: active.subscript, run: () => editor.chain().focus().toggleSubscript().run() },
-    { icon: Superscript, label: "Superscript", active: active.superscript, run: () => editor.chain().focus().toggleSuperscript().run() },
-    { icon: Code, label: "Inline code", active: active.code, run: () => editor.chain().focus().toggleCode().run() },
-    { icon: Braces, label: "Code block", active: active.codeBlock, run: () => editor.chain().focus().toggleCodeBlock().run() },
-    { icon: ListChecks, label: "Task checklist", active: active.task, run: () => editor.chain().focus().toggleTaskList().run() },
-    { icon: Minus, label: "Horizontal rule", run: () => editor.chain().focus().setHorizontalRule().run() },
-    { icon: Bookmark, label: "Footnote reference", run: footnoteReference },
-    { icon: ListTree, label: "Footnote text", run: footnoteDefinition },
-    { icon: Hash, label: "Heading ID", run: headingId },
-    { icon: ListTree, label: "Definition list", run: definitionList },
-    { icon: Smile, label: "Emoji", run: emoji },
+    { icon: Undo2, label: "Undo", disabled: !active.canUndo, run: () => editor.chain().focus().undo().run() },
+    { icon: Redo2, label: "Redo", disabled: !active.canRedo, run: () => editor.chain().focus().redo().run() },
+    { glyph: "S", label: "Strikethrough", active: active.strike, run: () => editor.chain().focus().toggleStrike().run() },
+    { glyph: "</>", label: "Inline code", active: active.code, run: () => editor.chain().focus().toggleCode().run() },
+    { glyph: "x²", label: "Superscript", active: active.superscript, run: () => editor.chain().focus().toggleSuperscript().run() },
+    { icon: Pilcrow, label: "Clear formatting", run: clearFormatting },
+    { glyph: "{}", label: "Fenced code block", active: active.codeBlock, run: () => editor.chain().focus().toggleCodeBlock().run() },
+    { glyph: "—", label: "Horizontal rule", run: () => editor.chain().focus().setHorizontalRule().run() },
+    { glyph: "[-1]", label: "Footnote reference", run: footnoteReference },
+    { glyph: "#id", label: "Heading ID", run: headingId },
+    { glyph: "DL", label: "Definition list", run: definitionList },
+    { icon: History, label: "Version history", disabled: true, run: () => {} },
   ];
 
-  const renderTool = ({ icon: Icon, label, active: isActive, run }: Tool, index: number) => (
-    <button
-      key={label + index}
+  const extra: Tool[] = [
+    { icon: ListOrdered, label: "Numbered list", active: active.ordered, run: () => editor.chain().focus().toggleOrderedList().run() },
+    { icon: ListChecks, label: "Task checklist", active: active.task, run: () => editor.chain().focus().toggleTaskList().run() },
+    { icon: Table2, label: "Table", active: active.table, run: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+    { icon: Highlighter, label: "Highlight", active: active.highlight, run: () => editor.chain().focus().toggleHighlight().run() },
+    { icon: Subscript, label: "Subscript", active: active.subscript, run: () => editor.chain().focus().toggleSubscript().run() },
+    { icon: Code2, label: "Code block", active: active.codeBlock, run: () => editor.chain().focus().toggleCodeBlock().run() },
+    { icon: Smile, label: "Emoji", run: emoji },
+    { icon: Bookmark, label: "Footnote text", run: footnoteDefinition },
+    { icon: Hash, label: "Heading ID", run: headingId },
+    { icon: ListTree, label: "Definition list", run: definitionList },
+    { icon: Minus, label: "Horizontal rule", run: () => editor.chain().focus().setHorizontalRule().run() },
+  ];
+
+  const render = (tool: Tool, index: number) => {
+    const Icon = tool.icon;
+    return <button
+      key={tool.label + index}
       type="button"
-      className="icon-button dock-tool"
-      title={label}
-      aria-label={label}
-      aria-pressed={!!isActive}
-      disabled={disabled || (label === "Undo" && !active.canUndo) || (label === "Redo" && !active.canRedo)}
-      onClick={run}
+      className={(Icon ? "tool-icon" : "tool-glyph") + (tool.active ? " is-active" : "") + (tool.featured ? " is-featured" : "")}
+      title={tool.label}
+      aria-label={tool.label}
+      aria-pressed={tool.active === undefined ? undefined : !!tool.active}
+      disabled={disabled || tool.disabled}
+      onClick={tool.run}
     >
-      <Icon size={16} />
-    </button>
-  );
+      {Icon ? <Icon size={15} /> : tool.glyph}
+    </button>;
+  };
 
   return <>
-    <div className="dock-row" aria-label="Formatting">
-      {primary.map(renderTool)}
-      <button
-        type="button"
-        className="icon-button dock-more"
-        aria-label={expanded ? "Fewer formatting tools" : "More formatting tools"}
-        aria-expanded={expanded}
-        onClick={onToggleExpanded}
-      >
-        {expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+    <div className="toolbar-row toolbar-primary" aria-label="Formatting">
+      <div className="toolbar-formatting">
+        {primary.slice(0, 3).map(render)}
+        <span className="tool-sep" aria-hidden="true" />
+        {primary.slice(3, 5).map((tool, i) => render(tool, i + 3))}
+        <span className="tool-sep" aria-hidden="true" />
+        {primary.slice(5).map((tool, i) => render(tool, i + 5))}
+      </div>
+      <button type="button" className="tool-more" aria-expanded={expanded} onClick={onToggleExpanded}>
+        More {expanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
       </button>
     </div>
-    {expanded && <div className="dock-row dock-secondary" aria-label="More formatting">{secondary.map(renderTool)}</div>}
+    {expanded && <div className="toolbar-row toolbar-extra" aria-label="More formatting">{extra.map(render)}</div>}
+    <div className="toolbar-row toolbar-secondary" aria-label="Extended formatting">{secondary.map(render)}</div>
   </>;
 }
