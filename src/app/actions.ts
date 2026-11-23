@@ -7,7 +7,7 @@ import { z } from "zod";
 import { auth, signIn, signOut, username } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
-import { createDocument, deleteDocument, DomainError, errorMessage } from "@/lib/documents";
+import { createBlankDocument, createDocument, deleteDocument, DomainError, errorMessage } from "@/lib/documents";
 import { folderAction, shareDocument } from "@/lib/workspace";
 
 export type ActionState = { error?: string; message?: string; token?: string };
@@ -35,6 +35,20 @@ export async function authenticate(mode: "login" | "signup", _: ActionState, for
 }
 
 export async function logout() { await signOut({ redirectTo: "/" }); }
+
+export async function createBlankDocumentAction(_form: FormData) {
+  const session = await auth();
+  if (!session?.user.id) redirect("/login");
+  let systemId: string;
+  try {
+    const doc = await createBlankDocument(session.user.id);
+    systemId = doc.systemId;
+  } catch (error) {
+    redirect("/dashboard?error=" + encodeURIComponent(errorMessage(error).message));
+  }
+  revalidatePath("/", "layout");
+  redirect("/docs/" + systemId + "/edit");
+}
 
 export async function workspaceAction(operation: string, _: ActionState, form: FormData): Promise<ActionState> {
   const session = await auth();

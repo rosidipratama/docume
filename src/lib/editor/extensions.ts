@@ -1,4 +1,10 @@
 import { Node, mergeAttributes, type MarkdownTokenizer } from "@tiptap/core";
+import StarterKit from "@tiptap/starter-kit";
+import { Markdown } from "@tiptap/markdown";
+import { Image } from "@tiptap/extension-image";
+import { TableKit } from "@tiptap/extension-table";
+import { TaskItem, TaskList } from "@tiptap/extension-list";
+import { Highlight } from "@tiptap/extension-highlight";
 import { Heading } from "@tiptap/extension-heading";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Superscript } from "@tiptap/extension-superscript";
@@ -112,11 +118,11 @@ export const FootnoteDefinition = Node.create({
     return [{ tag: 'div[data-type="footnote-definition"]' }];
   },
 
-  renderHTML({ node, HTMLAttributes }) {
+  renderHTML({ HTMLAttributes }) {
+    // The content hole must be the only child; the label is rendered via CSS from data-label.
     return [
       "div",
       mergeAttributes(HTMLAttributes, { "data-type": "footnote-definition", class: "footnote-definition" }),
-      ["span", { class: "footnote-label" }, `${String(node.attrs.label ?? "")}.`],
       0,
     ];
   },
@@ -231,3 +237,23 @@ export const MarkdownEmoji = Emoji.extend({
   markdownTokenizer: emojiTokenizer(shortcode => Boolean(shortcodeToEmoji(shortcode, emojis))) as MarkdownTokenizer,
   parseMarkdown: (token, helpers) => helpers.createNode("emoji", { name: token.shortcode }),
 });
+
+export const editorExtensions = [
+  StarterKit.configure({ underline: false, heading: false, link: { openOnClick: false } }),
+  HeadingWithId,
+  Markdown.configure({ markedOptions: { gfm: true } }),
+  Image,
+  TableKit,
+  TaskList,
+  TaskItem.configure({ nested: true }),
+  Highlight,
+  MarkdownSubscript,
+  MarkdownSuperscript,
+  MarkdownEmoji,
+  FootnoteReference,
+  FootnoteDefinition,
+  DefinitionList,
+  DefinitionItem,
+  DefinitionTerm,
+  DefinitionDescription,
+];

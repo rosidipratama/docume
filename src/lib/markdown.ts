@@ -14,7 +14,7 @@ import {
   type SyntaxTokenizer,
 } from "./markdown-syntax";
 
-const renderer = new Renderer();
+type RenderMode = "app" | "semantic";
 
 function safeUrl(href: string, protocols: string[]) {
   try {
@@ -32,28 +32,39 @@ function titleAttribute(title?: string | null) {
   return title ? ' title="' + escapeAttribute(title) + '"' : "";
 }
 
-renderer.html = () => "";
-renderer.link = function (token) {
-  const content = this.parser.parseInline(token.tokens);
-  if (!safeUrl(token.href, ["http:", "https:", "mailto:"])) return content;
-  return '<a href="' + escapeAttribute(token.href) + '"' + titleAttribute(token.title) + '">' + content + "</a>";
-};
-renderer.image = function (token) {
-  if (!safeUrl(token.href, ["http:", "https:"])) return "";
-  return '<img src="' + escapeAttribute(token.href) + '" alt="' + escapeAttribute(token.text) + '"' + titleAttribute(token.title) + ' loading="lazy" referrerpolicy="no-referrer">';
-};
+function footnoteId(label: string) {
+  return "fn-" + (label.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-") || "note");
+}
 
-// Extended `{#custom-id}` heading syntax.
-const baseHeading = renderer.heading;
-renderer.heading = function (token) {
-  const match = /\s*\{#([\p{L}\p{N}_-]+)\}\s*$/u.exec(token.text);
-  if (!match) return baseHeading.call(this, token);
-  const tokens = token.tokens.map(item => {
-    if (item.type !== "text") return item;
-    return { ...item, text: item.text.replace(/\s*\{#[\p{L}\p{N}_-]+\}\s*$/u, "") };
-  }).filter(item => item.type !== "text" || item.text.length > 0);
-  return `<h${token.depth} id="${escapeAttribute(match[1])}">${this.parser.parseInline(tokens)}</h${token.depth}>\n`;
-};
+function createRenderer(mode: RenderMode) {
+  const renderer = new Renderer();
+
+  renderer.html = () => "";
+  renderer.link = function (token) {
+    const content = this.parser.parseInline(token.tokens);
+    if (!safeUrl(token.href, ["http:", "https:", "mailto:"])) return content;
+    return '<a href="' + escapeAttribute(token.href) + '"' + titleAttribute(token.title) + '">' + content + "</a>";
+  };
+  renderer.image = function (token) {
+    if (!safeUrl(token.href, ["http:", "https:"])) return "";
+    return '<img src="' + escapeAttribute(token.href) + '" alt="' + escapeAttribute(token.text) + '"' + titleAttribute(token.title) + ' loading="lazy" referrerpolicy="no-referrer">';
+  };
+
+  // Extended `{#custom-id}` heading syntax.
+  const baseHeading = renderer.heading;
+  renderer.heading = function (token) {
+    const match = /\s*\{#([\p{L}\p{N}_-]+)\}\s*$/u.exec(token.text);
+    if (!match) return baseHeading.call(this, token);
+    const tokens = token.tokens.map(item => {
+      if (item.type !== "text") return item;
+      return { ...item, text: item.text.replace(/\s*\{#[\p{L}\p{N}_-]+\}\s*$/u, "") };
+    }).filter(item => item.type !== "text" || item.text.length > 0);
+    const attributes = ' id="' + escapeAttribute(match[1]) + '"';
+    return `<h${token.depth}${attributes}>${this.parser.parseInline(tokens)}</h${token.depth}>\n`;
+  };
+
+  return renderer;
+}
 
 type ExtendedToken = Tokens.Generic & {
   label?: string;
@@ -85,37 +96,66 @@ function markExtension(
   };
 }
 
-const markdownParser = new Marked({ renderer, gfm: true, async: false });
-markdownParser.use(
-  markExtension(highlightTokenizer, (token, parse) => `<mark>${parse(token.tokens || [])}</mark>`),
-  markExtension(subscriptTokenizer, (token, parse) => `<sub>${parse(token.tokens || [])}</sub>`),
-  markExtension(superscriptTokenizer, (token, parse) => `<sup>${parse(token.tokens || [])}</sup>`),
-  markExtension(footnoteReferenceTokenizer, token => `<sup class="footnote-ref">[${escapeAttribute(String(token.label ?? ""))}]</sup>`),
-  markExtension(footnoteDefinitionTokenizer, (token, parse) =>
-    `<div class="footnote-definition"><span class="footnote-label">${escapeAttribute(String(token.label ?? ""))}.</span> ${parse(token.tokens || [])}</div>\n`),
-  markExtension(definitionListTokenizer, (_token, parse) => {
-    const items = (_token.items || []).map(item => {
-      const term = item.termTokens
-        ? parse(item.termTokens)
-        : escapeAttribute(String(item.term ?? ""));
-      const definitions = (item.definitions || []).map(definition => `<dd>${parse(definition.tokens || [])}</dd>`).join("");
-      return `<dt>${term}</dt>${definitions}`;
-    }).join("");
-    return `<dl>${items}</dl>\n`;
-  }),
-  markExtension(emojiTokenizer(shortcode => Boolean(shortcodeToEmoji(shortcode, emojis))), token => {
-    const emoji = shortcodeToEmoji(String(token.label ?? ""), emojis)?.emoji;
-    return escapeAttribute(emoji || `:${String(token.label ?? "")}:`);
-  }),
-);
+function syntaxExtensions(mode: RenderMode): MarkedExtension[] {
+  const semantic = mode === "semantic";
+  const emoji = emojiTokenizer(shortcode => Boolean(shortcodeToEmoji(shortcode, emojis)));
+
+  return [
+    markExtension(highlightTokenizer, (token, parse) => `<mark>${parse(token.tokens || [])}</mark>`),
+    markExtension(subscriptTokenizer, (token, parse) => `<sub>${parse(token.tokens || [])}</sub>`),
+    markExtension(superscriptTokenizer, (token, parse) => `<sup>${parse(token.tokens || [])}</sup>`),
+    markExtension(footnoteReferenceTokenizer, token => {
+      const label = String(token.label ?? "");
+      if (!semantic) return `<sup class="footnote-ref">[${escapeAttribute(label)}]</sup>`;
+      const id = footnoteId(label);
+      return `<sup id="ref-${id}"><a href="#${id}">[${escapeAttribute(label)}]</a></sup>`;
+    }),
+    markExtension(footnoteDefinitionTokenizer, (token, parse) => {
+      const label = String(token.label ?? "");
+      const content = parse(token.tokens || []);
+      if (!semantic) {
+        return `<div class="footnote-definition"><span class="footnote-label">${escapeAttribute(label)}.</span> ${content}</div>\n`;
+      }
+      return `<aside id="${footnoteId(label)}"><strong>${escapeAttribute(label)}.</strong> ${content}</aside>\n`;
+    }),
+    markExtension(definitionListTokenizer, (_token, parse) => {
+      const items = (_token.items || []).map(item => {
+        const term = item.termTokens
+          ? parse(item.termTokens)
+          : escapeAttribute(String(item.term ?? ""));
+        const definitions = (item.definitions || []).map(definition => `<dd>${parse(definition.tokens || [])}</dd>`).join("");
+        return `<dt>${term}</dt>${definitions}`;
+      }).join("");
+      return `<dl>${items}</dl>\n`;
+    }),
+    markExtension(emoji, token => {
+      const shortcode = String(token.label ?? "");
+      return escapeAttribute(shortcodeToEmoji(shortcode, emojis)?.emoji || `:${shortcode}:`);
+    }),
+  ];
+}
+
+function createParser(mode: RenderMode) {
+  const parser = new Marked({ renderer: createRenderer(mode), gfm: true, async: false });
+  parser.use(...syntaxExtensions(mode));
+  return parser;
+}
+
+const appParser = createParser("app");
+const semanticParser = createParser("semantic");
 
 export function renderMarkdown(markdown: string) {
-  return markdownParser.parse(markdown, { async: false }) as string;
+  return appParser.parse(markdown, { async: false }) as string;
+}
+
+export function renderSemanticHtml(markdown: string) {
+  const body = semanticParser.parse(markdown, { async: false }) as string;
+  return "<article>\n" + body + "</article>";
 }
 
 export function containsRawHtml(markdown: string) {
   let found = false;
-  markdownParser.walkTokens(markdownParser.lexer(markdown), token => {
+  appParser.walkTokens(appParser.lexer(markdown), token => {
     if (token.type === "html") found = true;
   });
   return found;

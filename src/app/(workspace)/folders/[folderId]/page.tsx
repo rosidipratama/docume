@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { DocumentList } from "@/components/document-list";
 import { FolderIcon } from "@/components/folder-icon";
 import { WorkspaceForm } from "@/components/forms";
+import { createBlankDocumentAction } from "@/app/actions";
 import { requireUser } from "@/lib/session";
 import { folderAccess, listDocuments } from "@/lib/documents";
 import { parsePage } from "@/lib/api";
@@ -28,7 +29,7 @@ export default async function FolderPage({ params, searchParams }: {
     <header className="topbar"><Link href="/dashboard">Workspace</Link> <span>/</span> {folder.name}</header>
     <section className="workspace-content">
       <div className="section-heading heading"><div><h1 className="folder-title"><FolderIcon visibility={folder.visibility} size={26} /> {folder.name}</h1><p className="muted">{folder.visibility === "PUBLIC" ? "Public folder" : "Private folder"}</p></div>
-        {isOwner && <Link className="button secondary" href={"/dashboard?new=1&folderId=" + folderId}>Add document</Link>}
+        {isOwner && <form action={createBlankDocumentAction}><button className="button secondary">Add document</button></form>}
       </div>
       <DocumentList {...result} query={query} page={page} base={"/folders/" + folderId} />
       {isOwner && <details className="panel settings"><summary>Folder settings</summary>

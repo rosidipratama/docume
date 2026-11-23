@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LayoutGrid, LogOut, Plus } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { FolderIcon } from "@/components/folder-icon";
-import { logout } from "@/app/actions";
+import { createBlankDocumentAction, logout } from "@/app/actions";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 
@@ -15,7 +15,9 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   return <div className="workspace">
     <aside className="sidebar">
       <Brand href="/dashboard" />
-      <Link href="/dashboard?new=1" className="button primary"><Plus size={17} /> New document</Link>
+      <form action={createBlankDocumentAction}>
+        <button className="button primary new-document-button"><Plus size={17} /> New document</button>
+      </form>
       <nav aria-label="Workspace">
         <Link className="nav-row" href="/dashboard"><LayoutGrid size={17} /> All documents</Link>
         <div className="nav-heading">Folders <Link href="/dashboard?folder=1" aria-label="New folder"><Plus size={16} /></Link></div>

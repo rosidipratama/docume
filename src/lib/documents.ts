@@ -111,6 +111,26 @@ export async function createDocument(userId: string, input: unknown) {
   });
 }
 
+/** Creates a unique, unconfigured draft without requiring a title or folder. */
+export async function createBlankDocument(userId: string) {
+  return db.$transaction(async (tx) => {
+    const [user] = await tx.$queryRaw<{ username: string; docCounter: number }[]>`
+      UPDATE "User" SET "docCounter" = "docCounter" + 1
+      WHERE "id" = ${userId} AND "docCounter" < 99999
+      RETURNING "username", "docCounter"
+    `;
+    if (!user) throw new DomainError(422, "The account has reached its document ID limit.");
+    const sequence = user.docCounter;
+    const systemId = user.username + "-" + String(sequence).padStart(5, "0");
+    const title = `Untitled ${sequence} — ${systemId}`;
+    return tx.document.create({ data: {
+      ownerId: userId, systemId, sequence, title,
+      slug: slugFor(title) || systemId,
+      folderId: null, markdown: "",
+    } });
+  });
+}
+
 export async function lockDocument(tx: Prisma.TransactionClient, systemId: string) {
   await tx.$queryRaw`SELECT id FROM "Document" WHERE "systemId" = ${systemId} FOR UPDATE`;
 }

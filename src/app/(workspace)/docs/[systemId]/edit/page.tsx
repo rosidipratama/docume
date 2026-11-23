@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BookOpen } from "lucide-react";
 import { notFound } from "next/navigation";
 import { MarkdownEditor } from "@/components/markdown-editor";
 import { WorkspaceForm } from "@/components/forms";
@@ -20,11 +21,12 @@ export default async function EditDocument({ params }: { params: Promise<{ syste
     }) : [],
   ]);
   const systemInput = <input type="hidden" name="systemId" value={doc.systemId} />;
-  return <>
-    <header className="topbar"><Link href="/dashboard">Workspace</Link> <span>/</span> {systemId}</header>
-    <section className="workspace-content">
-      <div className="section-heading heading"><h1>Edit document</h1><Link href={"/d/" + systemId} className="button secondary">Read document</Link></div>
-      <MarkdownEditor systemId={systemId} initialVersion={doc.updatedAt.toISOString()} initial={{ title: doc.title, slug: doc.slug, markdown: doc.markdown, folderId: doc.folderId }} folders={folders} />
+  return <div className="editor-page">
+    <header className="topbar editor-topbar"><Link href="/dashboard">Workspace</Link> <span>/</span> {systemId}
+      <Link href={"/d/" + systemId} className="editor-read-link"><BookOpen size={15} /> Read document</Link>
+    </header>
+    <MarkdownEditor systemId={systemId} initialVersion={doc.updatedAt.toISOString()} initial={{ title: doc.title, slug: doc.slug, markdown: doc.markdown, folderId: doc.folderId }} folders={folders} />
+    <div className="editor-page-footer">
       {owner && <details className="panel settings"><summary>Sharing and access</summary>
         {doc.folderId ? <p className="muted">Access is managed in <Link href={"/folders/" + doc.folderId}>folder settings</Link>.</p> : <>
           <WorkspaceForm operation="share">{systemInput}<input type="hidden" name="type" value="USER" /><label>Share with a username<input name="username" required /></label><button className="button secondary">Grant read access</button></WorkspaceForm>
@@ -37,6 +39,6 @@ export default async function EditDocument({ params }: { params: Promise<{ syste
         </>}
       </details>}
       {owner && <WorkspaceForm operation="document-delete" className="delete-document" confirm="Permanently delete this document?">{systemInput}<button className="button danger">Delete document</button></WorkspaceForm>}
-    </section>
-  </>;
+    </div>
+  </div>;
 }
