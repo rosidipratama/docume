@@ -2,9 +2,9 @@ import { notFound } from "next/navigation";
 import { Reader } from "@/components/reader";
 import { DocumentList } from "@/components/document-list";
 import { FolderIcon } from "@/components/folder-icon";
-import { db } from "@/lib/db";
-import { literalSearch, metadata } from "@/lib/documents";
-import { parsePage } from "@/lib/api";
+import { db } from "@/app/lib/db";
+import { literalSearch, metadata } from "@/app/lib/documents";
+import { parsePage } from "@/app/lib/api";
 
 export default async function PublicFolder({ params, searchParams }: {
   params: Promise<{ folderId: string }>; searchParams: Promise<{ q?: string; page?: string }>;

@@ -1,5 +1,5 @@
-import { documentApi, readJson } from "@/lib/api";
-import { readDocument, updateDocument, deleteDocument, DomainError } from "@/lib/documents";
+import { documentApi, readJson } from "@/app/lib/api";
+import { readDocument, updateDocument, deleteDocument, DomainError } from "@/app/lib/documents";
 
 type Context = { params: Promise<{ systemId: string }> };
 

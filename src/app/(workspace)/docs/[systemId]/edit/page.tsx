@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MarkdownEditor } from "@/components/markdown-editor";
 import { WorkspaceForm } from "@/components/forms";
-import { requireUser } from "@/lib/session";
-import { readDocument } from "@/lib/documents";
-import { db } from "@/lib/db";
+import { requireUser } from "@/app/lib/session";
+import { readDocument } from "@/app/lib/documents";
+import { db } from "@/app/lib/db";
 
 export default async function EditDocument({ params }: { params: Promise<{ systemId: string }> }) {
   const { systemId } = await params;

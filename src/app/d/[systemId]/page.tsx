@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { Reader } from "@/components/reader";
 import { MarkdownViewer } from "@/components/markdown-viewer";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { readDocument } from "@/lib/documents";
+import { auth } from "@/app/lib/auth";
+import { db } from "@/app/lib/db";
+import { readDocument } from "@/app/lib/documents";
 
 export default async function DocumentPage({ params }: { params: Promise<{ systemId: string }> }) {
   const { systemId } = await params;

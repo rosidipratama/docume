@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { DocumentList } from "@/components/document-list";
 import { WorkspaceForm } from "@/components/forms";
-import { requireUser } from "@/lib/session";
-import { listDocuments } from "@/lib/documents";
-import { parsePage } from "@/lib/api";
+import { requireUser } from "@/app/lib/session";
+import { listDocuments } from "@/app/lib/documents";
+import { parsePage } from "@/app/lib/api";
 
 type Query = { q?: string; page?: string; folder?: string; error?: string };
 

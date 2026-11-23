@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import { DocumentList } from "@/components/document-list";
 import { FolderIcon } from "@/components/folder-icon";
 import { WorkspaceForm } from "@/components/forms";
-import { createBlankDocumentAction } from "@/app/actions";
-import { requireUser } from "@/lib/session";
-import { folderAccess, listDocuments } from "@/lib/documents";
-import { parsePage } from "@/lib/api";
-import { db } from "@/lib/db";
+import { createBlankDocumentAction } from "@/app/actions/documents";
+import { requireUser } from "@/app/lib/session";
+import { folderAccess, listDocuments } from "@/app/lib/documents";
+import { parsePage } from "@/app/lib/api";
+import { db } from "@/app/lib/db";
 
 export default async function FolderPage({ params, searchParams }: {
   params: Promise<{ folderId: string }>; searchParams: Promise<{ q?: string; page?: string }>;

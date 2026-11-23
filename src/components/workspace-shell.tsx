@@ -7,7 +7,8 @@ import { LayoutGrid, LogOut, PanelLeftClose, PanelLeftOpen, Plus } from "lucide-
 import { Brand } from "@/components/brand";
 import { DocumentDropzone } from "@/components/document-dropzone";
 import { FolderIcon } from "@/components/folder-icon";
-import { createBlankDocumentAction, logout } from "@/app/actions";
+import { createBlankDocumentAction } from "@/app/actions/documents";
+import { logout } from "@/app/actions/auth";
 
 const STORAGE_KEY = "docume:sidebar-rail";
 

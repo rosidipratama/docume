@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
-import { readDocument } from "@/lib/documents";
+import { auth } from "@/app/lib/auth";
+import { readDocument } from "@/app/lib/documents";
 
 export const dynamic = "force-dynamic";
 

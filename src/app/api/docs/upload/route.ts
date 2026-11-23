@@ -1,5 +1,5 @@
-import { documentApi } from "@/lib/api";
-import { DomainError, importDocuments } from "@/lib/documents";
+import { documentApi } from "@/app/lib/api";
+import { DomainError, importDocuments } from "@/app/lib/documents";
 
 export async function POST(request: Request) {
   return documentApi(async (userId) => {

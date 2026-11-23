@@ -1,6 +1,6 @@
 import { WorkspaceShell } from "@/components/workspace-shell";
-import { db } from "@/lib/db";
-import { requireUser } from "@/lib/session";
+import { db } from "@/app/lib/db";
+import { requireUser } from "@/app/lib/session";
 
 export default async function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();

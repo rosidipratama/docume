@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { Reader } from "@/components/reader";
 import { MarkdownViewer } from "@/components/markdown-viewer";
-import { db } from "@/lib/db";
-import { tokenHash } from "@/lib/workspace";
+import { db } from "@/app/lib/db";
+import { tokenHash } from "@/app/lib/workspace";
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false }, referrer: "no-referrer" };

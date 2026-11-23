@@ -174,7 +174,7 @@ export async function importDocuments(userId: string, files: { name: string; siz
       created.push({ systemId: document.systemId, title: document.title, folderId: document.folderId });
     }
     return created;
-  });
+  }, { timeout: 30_000 });
 }
 
 export async function lockDocument(tx: Prisma.TransactionClient, systemId: string) {

@@ -1,5 +1,5 @@
-import { documentApi, parsePage, readJson } from "@/lib/api";
-import { createDocument, listDocuments } from "@/lib/documents";
+import { documentApi, parsePage, readJson } from "@/app/lib/api";
+import { createDocument, listDocuments } from "@/app/lib/documents";
 
 export function GET(request: Request) {
   const url = new URL(request.url);

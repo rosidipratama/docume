@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { authenticate, workspaceAction } from "@/app/actions";
+import { authenticate } from "@/app/actions/auth";
+import { workspaceAction } from "@/app/actions/workspace";
 
 export function AccountForm({ mode }: { mode: "login" | "signup" }) {
   const [state, action, busy] = useActionState(authenticate.bind(null, mode), {});
