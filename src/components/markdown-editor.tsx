@@ -12,7 +12,14 @@ import { renderMarkdown, renderSemanticHtml } from "@/lib/markdown";
 
 type Draft = { title: string; slug: string; markdown: string; folderId: string | null };
 type Folder = { id: string; name: string };
+type Author = { name: string; username: string };
 type Mode = "visual" | "markdown" | "html";
+
+function authorInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length > 1) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  return name.slice(0, 2).toUpperCase() || "?";
+}
 
 function textFromHtml(html: string) {
   return html
@@ -37,10 +44,11 @@ function formatDate(value: string) {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-export function MarkdownEditor({ systemId, initial, folders, initialVersion, createdAt, accessPanel }: {
+export function MarkdownEditor({ systemId, initial, folders, author, initialVersion, createdAt, accessPanel }: {
   systemId: string;
   initial: Draft;
   folders?: Folder[];
+  author: Author;
   initialVersion: string;
   createdAt: string;
   accessPanel?: ReactNode;
@@ -299,8 +307,11 @@ export function MarkdownEditor({ systemId, initial, folders, initialVersion, cre
           <section className="inspector-section">
             <span className="field-label">AUDIT &amp; HISTORY</span>
             <div className="author-row">
-              <span className="author-avatar">SC</span>
-              <span className="author-text"><strong>Sarah Chen</strong><small>Original author</small></span>
+              <span className="author-avatar" title={author.name}>{authorInitials(author.name)}</span>
+              <span className="author-text">
+                <strong>{author.name}</strong>
+                <small>Original author{author.name !== author.username ? ` · @${author.username}` : ""}</small>
+              </span>
             </div>
             <div className="history-meta">
               <div><Clock3 size={11} /><span>Last edited {savedLabel}</span></div>

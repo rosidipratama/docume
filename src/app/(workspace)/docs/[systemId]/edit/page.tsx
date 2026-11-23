@@ -12,13 +12,15 @@ export default async function EditDocument({ params }: { params: Promise<{ syste
   const doc = await readDocument(systemId, user.id, true);
   if (!doc) notFound();
   const owner = doc.ownerId === user.id;
-  const [folders, shares] = await Promise.all([
+  const [folders, shares, documentOwner] = await Promise.all([
     owner ? db.folder.findMany({ where: { ownerId: user.id }, select: { id: true, name: true }, orderBy: { name: "asc" } }) : undefined,
     owner && !doc.folderId ? db.documentShare.findMany({
       where: { documentId: doc.id, revokedAt: null }, orderBy: { createdAt: "desc" },
       select: { id: true, type: true, expiresAt: true, recipient: { select: { username: true } } },
     }) : [],
+    db.user.findUnique({ where: { id: doc.ownerId }, select: { name: true, username: true } }),
   ]);
+  const authorName = documentOwner?.name || documentOwner?.username || "Unknown author";
   const systemInput = <input type="hidden" name="systemId" value={doc.systemId} />;
   const accessPanel = owner ? <>
     <div className="panel settings">
@@ -41,6 +43,7 @@ export default async function EditDocument({ params }: { params: Promise<{ syste
     createdAt={doc.createdAt.toISOString()}
     initial={{ title: doc.title, slug: doc.slug, markdown: doc.markdown, folderId: doc.folderId }}
     folders={folders}
+    author={{ name: authorName, username: documentOwner?.username ?? "unknown" }}
     accessPanel={accessPanel}
   />;
 }
