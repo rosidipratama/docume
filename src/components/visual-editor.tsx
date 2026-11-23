@@ -118,6 +118,29 @@ export function EditorToolbar({ editor, disabled, expanded, onToggleExpanded }: 
     table: false, canUndo: false, canRedo: false,
   };
 
+  const groupRef = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLButtonElement>(null);
+  const toggleRef = useRef(onToggleExpanded);
+  toggleRef.current = onToggleExpanded;
+
+  useEffect(() => {
+    if (!expanded) return;
+    const close = () => toggleRef.current();
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (groupRef.current?.contains(target) || moreRef.current?.contains(target)) return;
+      close();
+    };
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") close(); };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [expanded]);
+
   if (!editor) return <div className="dock-loading" aria-hidden="true" />;
 
   const headingId = (): void => {
@@ -239,11 +262,18 @@ export function EditorToolbar({ editor, disabled, expanded, onToggleExpanded }: 
         <span className="tool-sep" aria-hidden="true" />
         {primary.slice(5).map((tool, i) => render(tool, i + 5))}
       </div>
-      <button type="button" className="tool-more" aria-expanded={expanded} onClick={onToggleExpanded}>
-        More {expanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+      <button
+        ref={moreRef}
+        type="button"
+        className="tool-more"
+        aria-expanded={expanded}
+        aria-controls="editor-more-tools"
+        onClick={onToggleExpanded}
+      >
+        More {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
     </div>
-    {expanded && <div className="toolbar-extra-group">
+    {expanded && <div className="toolbar-extra-group" id="editor-more-tools" ref={groupRef}>
       <div className="toolbar-row toolbar-secondary" aria-label="Extended formatting">{secondary.map(render)}</div>
       <div className="toolbar-row toolbar-extra" aria-label="More formatting">{extra.map(render)}</div>
     </div>}
