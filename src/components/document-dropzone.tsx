@@ -9,7 +9,7 @@ type Uploaded = { systemId: string; title: string; folderId: string | null };
 
 const accepts = /\.(md|markdown|mdown|mkd|txt)$/i;
 
-export function DocumentDropzone() {
+export function DocumentDropzone({ compact = false }: { compact?: boolean }) {
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -93,8 +93,14 @@ export function DocumentDropzone() {
   }, [message]);
 
   return <>
-    <button type="button" className="button secondary upload-button" onClick={() => inputRef.current?.click()}>
-      <UploadCloud size={16} /> Upload files
+    <button
+      type="button"
+      className="button secondary sidebar-action upload-button"
+      aria-label="Upload files"
+      title={compact ? "Upload files" : undefined}
+      onClick={() => inputRef.current?.click()}
+    >
+      <UploadCloud size={17} /> <span className="nav-label">Upload files</span>
     </button>
     <input
       ref={inputRef}

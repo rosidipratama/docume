@@ -13,7 +13,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ syste
   const canEdit = !!user && (user.id === doc.ownerId || !!(doc.folderId && await db.folderMember.findFirst({
     where: { folderId: doc.folderId, userId: user.id, role: "EDITOR" }, select: { id: true },
   })));
-  return <Reader signedIn={!!user} canEdit={canEdit} systemId={systemId}>
+  return <Reader signedIn={!!user} canEdit={canEdit} systemId={systemId} downloadHref={"/api/docs/" + systemId + "/download"}>
     <p className="document-id">{systemId}</p><h1>{doc.title}</h1><MarkdownViewer markdown={doc.markdown} />
   </Reader>;
 }
