@@ -243,7 +243,9 @@ export function EditorToolbar({ editor, disabled, expanded, onToggleExpanded }: 
         More {expanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
       </button>
     </div>
-    {expanded && <div className="toolbar-row toolbar-extra" aria-label="More formatting">{extra.map(render)}</div>}
-    <div className="toolbar-row toolbar-secondary" aria-label="Extended formatting">{secondary.map(render)}</div>
+    {expanded && <div className="toolbar-extra-group">
+      <div className="toolbar-row toolbar-secondary" aria-label="Extended formatting">{secondary.map(render)}</div>
+      <div className="toolbar-row toolbar-extra" aria-label="More formatting">{extra.map(render)}</div>
+    </div>}
   </>;
 }

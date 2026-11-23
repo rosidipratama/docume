@@ -197,7 +197,8 @@ body:has(.editor-shell) .sidebar { display: none; }
 .toolbar-formatting, .toolbar-secondary, .toolbar-extra { display: flex; align-items: center; }
 .toolbar-formatting { gap: 14px; }
 .toolbar-secondary { gap: 18px; }
-.toolbar-extra { gap: 12px; border-top: 1px solid var(--ed-border-soft); }
+.toolbar-extra { gap: 12px; }
+.toolbar-extra-group { border-top: 1px solid var(--ed-border-soft); }
 .toolbar-row button { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border: 0; background: transparent; color: #6C6C65; transition: background .14s ease, color .14s ease; }
 .tool-icon, .tool-glyph { height: 28px; min-width: 28px; padding: 0 5px; border-radius: 6px; font-size: 13px; font-family: var(--ed-font); }
 .tool-glyph { color: #45453F; }
@@ -276,6 +277,19 @@ button[aria-disabled="true"] { cursor: default; opacity: 1; }
 .editor-dialog .settings form { padding: 14px 0; border-top: 1px solid var(--ed-border-soft); }
 .editor-dialog .settings > p { padding-top: 4px; }
 .delete-document { margin: 0; padding-top: 16px; border-top: 1px solid var(--ed-border-soft); }
+
+.sidebar > .upload-button { width: 100%; }
+.upload-hint { margin: -14px 0 0; font-size: .78rem; line-height: 1.4; }
+.drop-overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 24px; background: #19191580; backdrop-filter: blur(3px); pointer-events: none; }
+.drop-panel { width: min(520px, 100%); display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 48px 28px; border: 2px dashed #3D6FE3; border-radius: 16px; background: var(--ed-bg); color: var(--ed-ink); text-align: center; }
+.drop-panel svg { color: var(--ed-accent); }
+.drop-panel strong { font-size: 1.05rem; }
+.drop-panel span { color: var(--ed-ink-secondary); font-size: .88rem; }
+.upload-toast { position: fixed; right: 20px; bottom: 20px; z-index: 90; display: flex; align-items: center; gap: 10px; max-width: min(420px, calc(100vw - 40px)); padding: 12px 14px; border: 1px solid var(--ed-border); border-radius: 10px; background: var(--ed-surface); box-shadow: 0 12px 34px #19191526; font-size: .86rem; }
+.upload-toast > svg { color: #3FA564; flex-shrink: 0; }
+.upload-toast span { flex: 1; }
+.upload-toast a { color: var(--ed-accent); font-weight: 650; text-decoration: none; }
+.upload-toast button { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border: 0; border-radius: 5px; background: transparent; color: var(--ed-ink-muted); }
 
 .reader { min-height: 100vh; background: var(--paper); padding: 0 clamp(18px, 5vw, 58px); }
 .reader-content { max-width: 740px; margin: auto; padding: clamp(38px, 7vw, 92px) 0 75px; overflow-wrap: anywhere; }

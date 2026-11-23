@@ -131,6 +131,52 @@ export async function createBlankDocument(userId: string) {
   });
 }
 
+/** Imported files always land in No folder with no shares, so they stay private. */
+export async function importDocuments(userId: string, files: { name: string; size: number; text: () => Promise<string> }[]) {
+  if (!files.length) throw new DomainError(422, "Choose at least one file to upload.");
+  if (files.length > 10) throw new DomainError(422, "Upload up to 10 files at a time.");
+  const extension = /\.(md|markdown|mdown|mkd|txt)$/i;
+  const prepared = await Promise.all(files.map(async file => {
+    const name = file.name.split(/[\\/]/).pop() ?? file.name;
+    if (!extension.test(name)) throw new DomainError(422, `${name} is not a Markdown or text file.`);
+    if (file.size > 2_000_000) throw new DomainError(422, `${name} is larger than the 2 MB upload limit.`);
+    const title = name.replace(extension, "").trim().slice(0, 160) || "Imported document";
+    const markdown = (await file.text()).replace(/^\uFEFF/, "").slice(0, 500_000);
+    return { title, markdown };
+  }));
+
+  return db.$transaction(async (tx) => {
+    const created: { systemId: string; title: string; folderId: string | null }[] = [];
+    for (const item of prepared) {
+      const [user] = await tx.$queryRaw<{ username: string; docCounter: number }[]>`
+        UPDATE "User" SET "docCounter" = "docCounter" + 1
+        WHERE "id" = ${userId} AND "docCounter" < 99999
+        RETURNING "username", "docCounter"
+      `;
+      if (!user) throw new DomainError(422, "The account has reached its document ID limit.");
+      const sequence = user.docCounter;
+      const systemId = user.username + "-" + String(sequence).padStart(5, "0");
+      let title = item.title;
+      let titleSuffix = 2;
+      while (await tx.document.findFirst({ where: { ownerId: userId, title: { equals: title, mode: "insensitive" } }, select: { id: true } })) {
+        const suffix = ` (${titleSuffix++})`;
+        title = item.title.slice(0, 160 - suffix.length) + suffix;
+      }
+      let slug = slugFor(title) || systemId;
+      let slugSuffix = 2;
+      while (await tx.document.findFirst({ where: { ownerId: userId, slug }, select: { id: true } })) {
+        const suffix = "-" + slugSuffix++;
+        slug = slug.slice(0, 100 - suffix.length) + suffix;
+      }
+      const document = await tx.document.create({ data: {
+        ownerId: userId, systemId, sequence, title, slug, markdown: item.markdown, folderId: null,
+      } });
+      created.push({ systemId: document.systemId, title: document.title, folderId: document.folderId });
+    }
+    return created;
+  });
+}
+
 export async function lockDocument(tx: Prisma.TransactionClient, systemId: string) {
   await tx.$queryRaw`SELECT id FROM "Document" WHERE "systemId" = ${systemId} FOR UPDATE`;
 }
