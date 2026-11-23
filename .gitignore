@@ -5,3 +5,6 @@ node_modules/
 *.tsbuildinfo
 src/generated/
 .DS_Store
+
+# Local reference docs — intentionally not versioned
+/docs/
