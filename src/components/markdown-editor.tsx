@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   BookOpen, Check, Clock3, Copy, FileText, Folder, History, Info,
-  Link2, MoreHorizontal, PanelRight, PanelRightClose, Share2, X,
+  Link2, MoreHorizontal, PanelRight, PanelRightClose, Save, Share2, X,
 } from "lucide-react";
 import { useDocumentEditor, EditorToolbar, VisualEditor } from "./visual-editor";
 import { renderMarkdown, renderSemanticHtml } from "@/lib/markdown";
+import { useEditorCommands } from "@/lib/editor/commands";
+import { CommandPalette, type PaletteCommand } from "./command-palette";
 
 type Draft = { title: string; slug: string; markdown: string; folderId: string | null };
 type Folder = { id: string; name: string };
@@ -60,6 +62,7 @@ export function MarkdownEditor({ systemId, initial, folders, author, initialVers
   const [mode, setMode] = useState<Mode>("visual");
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [toolsExpanded, setToolsExpanded] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [accessOpen, setAccessOpen] = useState(false);
   const [copied, setCopied] = useState<"slug" | "html" | "">("");
   const [lastSaved, setLastSaved] = useState(initialVersion);
@@ -81,8 +84,20 @@ export function MarkdownEditor({ systemId, initial, folders, author, initialVers
     onChange: value => change("markdown", value),
     active: mode === "visual",
   });
+  const { palette: editorCommands } = useEditorCommands(editor, mode !== "visual");
 
   useEffect(() => { setSavedLabel(relativeTime(lastSaved)); }, [lastSaved]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen(open => !open);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   useEffect(() => {
     if (window.innerWidth <= 1020) setInspectorOpen(false);
@@ -158,6 +173,30 @@ export function MarkdownEditor({ systemId, initial, folders, author, initialVers
     { key: "visual", label: "Visual", name: "Visual" },
     { key: "markdown", label: "", glyph: "/ MD", name: "Markdown" },
     { key: "html", label: "HTML", glyph: "</>", name: "HTML" },
+  ];
+
+  const paletteCommands: PaletteCommand[] = [
+    ...editorCommands.map(command => ({ ...command, group: "Formatting" })),
+    { id: "view-visual", group: "View", label: "Visual mode", glyph: "W", keywords: "wysiwyg rich text",
+      disabled: mode === "visual", run: () => setMode("visual") },
+    { id: "view-markdown", group: "View", label: "Markdown mode", glyph: "MD", keywords: "raw source md",
+      disabled: mode === "markdown", run: () => setMode("markdown") },
+    { id: "view-html", group: "View", label: "HTML mode", glyph: "</>", keywords: "semantic markup",
+      disabled: mode === "html", run: () => setMode("html") },
+    { id: "document-save", group: "Document", label: "Save document", icon: Save, keywords: "sync persist",
+      hint: changed ? undefined : "No unsaved changes", disabled: !changed || busy, run: () => void save() },
+    { id: "document-copy-slug", group: "Document", label: "Copy URL slug", icon: Link2, keywords: "link clipboard",
+      disabled: !draft.slug.trim(), run: () => void copy(draft.slug, "slug") },
+    { id: "document-copy-html", group: "Document", label: "Copy semantic HTML", icon: Copy, keywords: "export clipboard",
+      run: () => void copy(html, "html") },
+    { id: "document-properties", group: "Document", label: inspectorOpen ? "Hide properties" : "Show properties",
+      icon: inspectorOpen ? PanelRightClose : PanelRight, keywords: "inspector sidebar metadata",
+      run: () => setInspectorOpen(open => !open) },
+    { id: "document-read", group: "Document", label: "Read document", icon: BookOpen, keywords: "reader view",
+      run: () => router.push("/d/" + systemId) },
+    { id: "document-share", group: "Document", label: "Sharing and access", icon: Share2, keywords: "permissions invite",
+      hint: accessPanel ? undefined : "Only the owner can manage sharing",
+      disabled: !accessPanel, run: () => setAccessOpen(true) },
   ];
 
   return <div className="editor-shell">
@@ -240,9 +279,9 @@ export function MarkdownEditor({ systemId, initial, folders, author, initialVers
               <span className="status-stats">
                 {words} words&nbsp; · &nbsp;{text.length} chars&nbsp; · &nbsp;{readingTime} min read&nbsp; · &nbsp;Edited {savedLabel}
               </span>
-              <span className="quick-commands" title="Quick commands are coming soon" aria-disabled="true">
+              <button type="button" className="quick-commands" title="Open quick commands (⌘K)" aria-haspopup="dialog" onClick={() => setPaletteOpen(true)}>
                 <kbd>⌘K</kbd> Quick Commands
-              </span>
+              </button>
             </div>
           </div>
         </div>
@@ -337,5 +376,7 @@ export function MarkdownEditor({ systemId, initial, folders, author, initialVers
         </div>
       </div>
     </div>}
+
+    <CommandPalette open={paletteOpen} commands={paletteCommands} onClose={() => setPaletteOpen(false)} />
   </div>;
 }
