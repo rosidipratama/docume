@@ -21,6 +21,7 @@ export function WorkspaceShell({ children, userName, folders }: {
 }) {
   const pathname = usePathname() ?? "";
   const onEditor = /^\/docs\/[^/]+\/edit(?:\/|$)/.test(pathname);
+  const onDashboard = pathname === "/dashboard";
   const [rail, setRail] = useState(onEditor);
 
   useEffect(() => {
@@ -57,15 +58,15 @@ export function WorkspaceShell({ children, userName, folders }: {
       <div className="sidebar-actions">
         <form action={createBlankDocumentAction}>
           <button className="button primary sidebar-action new-document-button" aria-label="New document" title={rail ? "New document" : undefined}>
-            <Plus size={17} /> <span className="nav-label">New document</span>
+            <Plus size={18} /> <span className="nav-label">New document</span>
           </button>
         </form>
         <DocumentDropzone compact={rail} />
       </div>
-      <p className="upload-hint muted">Or drag and drop .md files anywhere.</p>
+      <p className="upload-hint muted">Or drag &amp; drop <span className="upload-hint-tail"><span className="file-chip">.md</span>, <span className="file-chip">.txt</span> anywhere</span></p>
 
       <nav aria-label="Workspace">
-        <Link className="nav-row" href="/dashboard" aria-label="All documents" title={rail ? "All documents" : undefined}>
+        <Link className={"nav-row" + (onDashboard ? " is-active" : "")} href="/dashboard" aria-current={onDashboard ? "page" : undefined} aria-label="All documents" title={rail ? "All documents" : undefined}>
           <LayoutGrid size={17} /> <span className="nav-label">All documents</span>
         </Link>
         <div className="nav-heading">
@@ -73,9 +74,10 @@ export function WorkspaceShell({ children, userName, folders }: {
           <Link href="/dashboard?folder=1" aria-label="New folder" title="New folder"><Plus size={16} /></Link>
         </div>
         {folders.map(folder => <Link
-          className="nav-row"
+          className={"nav-row" + (pathname === "/folders/" + folder.id ? " is-active" : "")}
           key={folder.id}
           href={"/folders/" + folder.id}
+          aria-current={pathname === "/folders/" + folder.id ? "page" : undefined}
           aria-label={"Folder: " + folder.name}
           title={rail ? folder.name : undefined}
         >
