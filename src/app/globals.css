@@ -251,6 +251,8 @@ select { appearance: none; padding-right: 32px; background-image: linear-gradien
 .editor-markdown { display: block; width: 100%; min-height: 55vh; padding: 0; border: 0; border-radius: 0; resize: vertical; background: transparent; color: var(--ed-ink); font-family: var(--ed-mono); font-size: 14px; line-height: 1.75; }
 .editor-markdown:focus-visible { outline: none; }
 .editor-preview { min-height: 55vh; }
+.editor-html { min-height: 55vh; margin: 0; padding: 0; background: transparent; color: var(--ed-ink); font-family: var(--ed-mono); font-size: 13px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
+.editor-html code { font: inherit; }
 
 .editor-bottom-docks { flex: 0 0 auto; padding: 0 32px 18px; }
 .format-toolbar { max-width: 900px; margin: 0 auto; padding: 0 18px; background: var(--ed-surface); border: 1px solid var(--ed-border); border-radius: 10px; box-shadow: 0 6px 18px #2A2A1E14; }

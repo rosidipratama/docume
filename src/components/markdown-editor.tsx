@@ -247,7 +247,7 @@ export function MarkdownEditor({ systemId, initial, folders, author, initialVers
               />
             </div>
             <div className="editor-view" data-active={mode === "html"}>
-              <div className="markdown editor-preview" dangerouslySetInnerHTML={{ __html: html }} />
+              <pre className="editor-html" aria-label="Generated HTML"><code>{html}</code></pre>
             </div>
           </div>
         </div>
